@@ -25,6 +25,8 @@ let value = 0.3;
 let rgb_color: Color = Color::hsv_to_rgb(hue, saturation, value);
 ```
 
+Optionally, you can use the `HsvPalette` struct to get a generator which spits out the immediate HSV values as opposed to a `Color` struct.
+
 ## Example  
 
 A color palette might look like this when rendered:  

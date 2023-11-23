@@ -26,6 +26,8 @@
 //! The third param determines whether colors are generated close to each other
 //! or are spread apart. `true` generates adjacent colors while `false` will generate
 //! a very spread color palette.
+//!
+//! Optionally, you can use the `HsvPalette` struct to get a generator which spits out the immediate HSV values as opposed to a `Color` struct.
 //! 
 //! **WARNING** The `ColorPalette` iterator is infinite! It will never exhaust! As such, you should never
 //! use `collect` or `for x in` patterns with it. Instead, always use `take` if you want a certain number of colors. 
@@ -37,12 +39,14 @@ pub use color::Color;
 
 /// Container for a vector of colors.
 /// You can also use it to store your own custom palette of you so desire. 
-pub struct ColorPalette {
+pub struct HsvPalette {
     iteration: usize,
     base_divergence: f32,
     palette_type: PaletteType,
     hue: Hue,
 }
+
+pub struct ColorPalette(HsvPalette);
 
 pub enum PaletteType {
     Random,
@@ -66,14 +70,16 @@ impl ColorPalette {
             base_divergence = 25.0;
         }
 
-        ColorPalette {
+        Self(HsvPalette {
             base_divergence,
             palette_type,
             hue,
             iteration: 0
-        }
+        })
     }
+}
 
+impl HsvPalette {
     fn palette_dark(&self) -> Hsv {
         let iteration = self.iteration as f32;
         let f = (iteration * 43.0).cos().abs();
@@ -130,8 +136,8 @@ impl ColorPalette {
     }
 }
 
-impl Iterator for ColorPalette {
-    type Item = Color;
+impl Iterator for HsvPalette {
+    type Item = Hsv;
 
     fn next(&mut self) -> Option<Self::Item> {
         let (hue, saturation, value) = match self.palette_type {
@@ -139,12 +145,25 @@ impl Iterator for ColorPalette {
             PaletteType::Pastel => self.palette_pastel(),
             PaletteType::Dark => self.palette_dark(),
         };
-        let color = Color::hsv_to_rgb(hue, saturation, value);
         self.hue = hue;
         self.iteration += 1;
-        Some(color)
+        Some((hue, saturation, value))
     }
 }
+
+impl Iterator for ColorPalette {
+    type Item = Color;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some((hue, saturation, value)) = self.0.next() {
+            Some(Color::hsv_to_rgb(hue, saturation, value))
+        } else {
+            None
+        }
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests {
