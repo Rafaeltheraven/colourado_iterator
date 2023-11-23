@@ -142,17 +142,21 @@ impl HsvPalette {
         }
         (hue, saturation, value)    
     }
+
+    pub fn get(&self) -> Hsv {
+        match self.palette_type {
+            PaletteType::Random => self.palette_random(),
+            PaletteType::Pastel => self.palette_pastel(),
+            PaletteType::Dark => self.palette_dark(),
+        }
+    }
 }
 
 impl Iterator for HsvPalette {
     type Item = Hsv;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (hue, saturation, value) = match self.palette_type {
-            PaletteType::Random => self.palette_random(),
-            PaletteType::Pastel => self.palette_pastel(),
-            PaletteType::Dark => self.palette_dark(),
-        };
+        let (hue, saturation, value) = self.get();
         self.hue = hue;
         self.iteration += 1;
         Some((hue, saturation, value))
