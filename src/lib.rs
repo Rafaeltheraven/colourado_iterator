@@ -77,6 +77,14 @@ impl ColorPalette {
             iteration: 0
         })
     }
+
+    pub fn get_inner(&self) -> &HsvPalette {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> HsvPalette {
+        self.0
+    }
 }
 
 impl HsvPalette {
