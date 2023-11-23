@@ -5,11 +5,12 @@
 //! # Usage
 //! 
 //! ```rust
-//! use colourado::{Color, ColorPalette, PaletteType};
+//! use colourado_iter::{Color, ColorPalette, PaletteType};
 //! 
-//! let palette = ColorPalette::new(4, PaletteType::Random, false);
-//! let random_color = palette.colors[0].red;
-//! let color_array: [f32; 3] = palette.colors[1].to_array();
+//! let mut palette = ColorPalette::new(PaletteType::Random, false, rand::thread_rng());
+//! let random_color = palette.next();
+//! let color_array: [f32; 3] = palette.next().unwrap().to_array();
+//! let many_colors = palette.take(20);
 //! let hue = 315.0;
 //! let saturation = 0.5;
 //! let value = 0.3;
@@ -26,10 +27,10 @@
 //! or are spread apart. `true` generates adjacent colors while `false` will generate
 //! a very spread color palette.
 //! 
+//! **WARNING** The `ColorPalette` iterator is infinite! It will never exhaust! As such, you should never
+//! use `collect` or `for x in` patterns with it. Instead, always use `take` if you want a certain number of colors. 
 
-extern crate rand;
-
-use rand::prelude::*;
+use rand::Rng;
 
 mod color;
 pub use color::Color;
@@ -37,7 +38,10 @@ pub use color::Color;
 /// Container for a vector of colors.
 /// You can also use it to store your own custom palette of you so desire. 
 pub struct ColorPalette {
-    pub colors: Vec<Color>
+    iteration: usize,
+    base_divergence: f32,
+    palette_type: PaletteType,
+    hue: Hue,
 }
 
 pub enum PaletteType {
@@ -46,116 +50,99 @@ pub enum PaletteType {
     Dark,
 }
 
+pub(crate) type Hue = f32;
+pub(crate) type Saturation = f32;
+pub(crate) type Value = f32;
+pub type Hsv = (Hue, Saturation, Value);
+
 impl ColorPalette {
-    pub fn new(count: u32, palette_type: PaletteType, adjacent_colors: bool) -> ColorPalette {
-        let mut rng = rand::thread_rng();
+    pub fn new<T: Rng>(palette_type: PaletteType, adjacent_colors: bool, mut rng: T) -> Self {
 
-        // generate a random color but prevent it from being completely white or black
-        let mut hue: f32;
-        let mut saturation: f32;
-        let mut value: f32;
+        let hue = rng.gen_range(0.0..360.0);
 
-        match palette_type {
-            PaletteType::Random => {
-                hue = rng.gen_range(0.0, 360.0);
-                saturation = rng.gen_range(0.5, 1.0);
-                value = rng.gen_range(0.3, 1.0);
-            },
-            PaletteType::Pastel => {
-                hue = rng.gen_range(0.0, 360.0);
-                saturation = rng.gen_range(0.1, 0.4);
-                value = rng.gen_range(0.7, 1.0);
-            },
-            PaletteType::Dark => {
-                hue = rng.gen_range(0.0, 360.0);
-                saturation = rng.gen_range(0.5, 1.0);
-                value = rng.gen_range(0.0, 0.4);
-            }
-        }
-
-        let mut palette: Vec<Color> = vec![];
         let mut base_divergence = 80.0;
 
-        if adjacent_colors == true {
+        if adjacent_colors {
             base_divergence = 25.0;
         }
 
-        base_divergence -= (count as f32) / 2.6;
-
-        for i in 0..count {
-            let rgb = Color::hsv_to_rgb(hue, saturation, value);
-
-            match palette_type {
-                PaletteType::Random => {
-                    ColorPalette::palette_random(&mut hue, &mut saturation, &mut value, i as f32, base_divergence);
-                },
-                PaletteType::Pastel => {
-                    ColorPalette::palette_pastel(&mut hue, &mut saturation, &mut value, i as f32, base_divergence);
-                },
-                PaletteType::Dark => {
-                    ColorPalette::palette_dark(&mut hue, &mut saturation, &mut value, i as f32, base_divergence);
-                }
-            }
-
-            palette.push(Color {
-                red: rgb.red,
-                green: rgb.green,
-                blue: rgb.blue
-            });
-        }
-
         ColorPalette {
-            colors: palette
+            base_divergence,
+            palette_type,
+            hue,
+            iteration: 0
         }
     }
 
-    fn palette_dark(hue: &mut f32, saturation: &mut f32, value: &mut f32, iteration: f32, divergence: f32) {
+    fn palette_dark(&self) -> Hsv {
+        let iteration = self.iteration as f32;
         let f = (iteration * 43.0).cos().abs();
-        let mut div = divergence;
+        let mut div = self.base_divergence;
 
         if div < 15.0 {
             div = 15.0;
         }
 
-        *hue = (*hue + div + f).abs() % 360.0;
-        *saturation = 0.32 + ((iteration * 0.75).sin() / 2.0).abs();
-        *value = 0.1 + (iteration.cos() / 6.0).abs();
+        let hue = (self.hue + div + f).abs() % 360.0;
+        let saturation = 0.32 + ((iteration * 0.75).sin() / 2.0).abs();
+        let value = 0.1 + (iteration.cos() / 6.0).abs();
+        (hue, saturation, value)
     }
 
-    fn palette_pastel(hue: &mut f32, saturation: &mut f32, value: &mut f32, iteration: f32, divergence: f32) {
+    fn palette_pastel(&self) -> Hsv  {
+        let iteration = self.iteration as f32;
         let f = (iteration * 25.0).cos().abs();
-        let mut div = divergence;
+        let mut div = self.base_divergence;
 
         if div < 15.0 {
             div = 15.0;
         }
 
-        *hue = (*hue + div + f).abs() % 360.0;
-        *saturation = ((iteration * 0.35).cos() / 5.0).abs();
-        *value = 0.5 + (iteration.cos() / 2.0).abs();
+        let hue = (self.hue + div + f).abs() % 360.0;
+        let saturation = ((iteration * 0.35).cos() / 5.0).abs();
+        let value = 0.5 + (iteration.cos() / 2.0).abs();
+        (hue, saturation, value)
     }
 
-    fn palette_random(hue: &mut f32, saturation: &mut f32, value: &mut f32, iteration: f32, divergence: f32) {
+    fn palette_random(&self) -> Hsv  {
+        let iteration = self.iteration as f32;
         let f = (iteration * 55.0).tan().abs();
-        let mut div = divergence;
+        let mut div = self.base_divergence;
 
         if div < 15.0 {
             div = 15.0;
         }
 
-        *hue = (*hue + div + f).abs() % 360.0;
-        *saturation = (iteration * 0.35).sin().abs();
-        *value = ((6.33 * iteration) * 0.5).cos().abs();
+        let hue = (self.hue + div + f).abs() % 360.0;
+        let mut saturation = (iteration * 0.35).sin().abs();
+        let mut value = ((6.33 * iteration) * 0.5).cos().abs();
 
-        if *saturation < 0.4 {
-            *saturation = 0.4;
+        if saturation < 0.4 {
+            saturation = 0.4;
         }
 
-        if *value < 0.2 {
-            *value = 0.2;
-        } else if *value > 0.85 {
-            *value = 0.85;
-        }        
+        if value < 0.2 {
+            value = 0.2;
+        } else if value > 0.85 {
+            value = 0.85;
+        }
+        (hue, saturation, value)    
+    }
+}
+
+impl Iterator for ColorPalette {
+    type Item = Color;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (hue, saturation, value) = match self.palette_type {
+            PaletteType::Random => self.palette_random(),
+            PaletteType::Pastel => self.palette_pastel(),
+            PaletteType::Dark => self.palette_dark(),
+        };
+        let color = Color::hsv_to_rgb(hue, saturation, value);
+        self.hue = hue;
+        self.iteration += 1;
+        Some(color)
     }
 }
 
@@ -166,17 +153,20 @@ mod tests {
 
     #[test]
     fn generates_palette() {
-        let palette = ColorPalette::new(7, PaletteType::Random, false);
+        let palette = ColorPalette::new(PaletteType::Random, false, rand::thread_rng());
 
-        for color in palette.colors {
-            assert!(color.red >= 0.0);
-            assert!(color.red <= 1.0);
+        let colors = palette.take(7);
 
-            assert!(color.green >= 0.0);
-            assert!(color.green <= 1.0);
+        for color in colors {
+            let (red, green, blue) = color.to_tuple();
+            assert!(red >= 0.0);
+            assert!(red <= 1.0);
 
-            assert!(color.blue >= 0.0);
-            assert!(color.blue <= 1.0);
+            assert!(green >= 0.0);
+            assert!(green <= 1.0);
+
+            assert!(blue >= 0.0);
+            assert!(blue <= 1.0);
         }        
     }
 }
