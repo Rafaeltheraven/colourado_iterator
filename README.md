@@ -1,19 +1,24 @@
-# Colourado  
+# Colourado-Iter
+
+This is a fork of [Colourado](https://github.com/BrandtM/colourado).
 
 A small and minimalistic library to generate a random color palette.  
 The user-facing `Color` struct contains RGB colors ranging from 0 to 1.  
 All colors are of type f32 (no exceptions).
 
+This fork implements the `Iterator` trait for the `ColorPalette` struct, allowing it to continuously create new colors every time `next` is called. 
+Furthermore, it allows you to supply your own rng to determine the initial hue.
 
+Additionally, the `Color` struct has been extended to allow more representations (such as converting back to HSV, or returning a hex color representation).
 
 # Usage
 
 ```rust
 use colourado::{Color, ColorPalette, PaletteType};
 
-let palette = ColorPalette::new(4, PaletteType::Random, false);
-let random_color = palette.colors[0].red;
-let color_array: [f32; 3] = palette.colors[1].to_array();
+let palette = ColorPalette::new(PaletteType::Random, false);
+let random_color = palette.next();
+let color_array: [f32; 3] = palette.next().to_array();
 let hue = 315.0;
 let saturation = 0.5;
 let value = 0.3;

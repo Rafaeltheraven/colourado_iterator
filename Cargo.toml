@@ -1,15 +1,16 @@
 [package]
-name = "colourado"
-description = "A small and minimalistic library to generate a random color palette"
-version = "0.2.0"
-authors = ["PrydeRage <marius.brandt@hotmail.com>"]
-edition = "2018"
+name = "colourado-iter"
+description = "A small and minimalistic library to generate a random color palette of infinite size"
+version = "1.0.0"
+authors = ["PrydeRage <marius.brandt@hotmail.com>", "Rafaeltheraven <rafael@raaf.nu>"]
+edition = "2021"
 license = "MIT"
-repository = "https://github.com/BrandtM/colourado"
+repository = "https://github.com/Rafaeltheraven/colourado_iterator"
 readme = "README.md"
 
 [dependencies]
-rand = "0.6"
+rand = "0.8.5"
 
 [dev-dependencies]
-piston_window = "0.87"
+piston_window = "0.131.0"
+float-cmp = "0.9.0"
