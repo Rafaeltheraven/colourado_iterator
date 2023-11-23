@@ -16,7 +16,7 @@ Additionally, the `Color` struct has been extended to allow more representations
 ```rust
 use colourado::{Color, ColorPalette, PaletteType};
 
-let palette = ColorPalette::new(PaletteType::Random, false);
+let palette = ColorPalette::new(PaletteType::Random, false, &mut rand::thread_rng());
 let random_color = palette.next();
 let color_array: [f32; 3] = palette.next().to_array();
 let hue = 315.0;

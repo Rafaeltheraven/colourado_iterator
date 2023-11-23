@@ -7,7 +7,7 @@
 //! ```rust
 //! use colourado_iter::{Color, ColorPalette, PaletteType};
 //! 
-//! let mut palette = ColorPalette::new(PaletteType::Random, false, rand::thread_rng());
+//! let mut palette = ColorPalette::new(PaletteType::Random, false, &mut rand::thread_rng());
 //! let random_color = palette.next();
 //! let color_array: [f32; 3] = palette.next().unwrap().to_array();
 //! let many_colors = palette.take(20);

@@ -20,7 +20,7 @@ fn main() {
 	
 	let adjacent = matches!(args[3].to_lowercase().as_ref(), "adjacent");
 
-	let palette = ColorPalette::new(palette_type, adjacent, rand::thread_rng());
+	let palette = ColorPalette::new(palette_type, adjacent, &mut rand::thread_rng());
 
 	let colors: Vec<_> = palette.take(num_colors).collect();
 
