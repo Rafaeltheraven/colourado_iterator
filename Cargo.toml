@@ -1,7 +1,7 @@
 [package]
 name = "colourado-iter"
 description = "A small and minimalistic library to generate a random color palette of infinite size"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["PrydeRage <marius.brandt@hotmail.com>", "Rafaeltheraven <rafael@raaf.nu>"]
 edition = "2021"
 license = "MIT"

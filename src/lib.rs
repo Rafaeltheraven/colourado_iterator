@@ -56,7 +56,7 @@ pub(crate) type Value = f32;
 pub type Hsv = (Hue, Saturation, Value);
 
 impl ColorPalette {
-    pub fn new<T: Rng>(palette_type: PaletteType, adjacent_colors: bool, mut rng: T) -> Self {
+    pub fn new<T: Rng>(palette_type: PaletteType, adjacent_colors: bool, rng: &mut T) -> Self {
 
         let hue = rng.gen_range(0.0..360.0);
 
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn generates_palette() {
-        let palette = ColorPalette::new(PaletteType::Random, false, rand::thread_rng());
+        let palette = ColorPalette::new(PaletteType::Random, false, &mut rand::thread_rng());
 
         let colors = palette.take(7);
 
