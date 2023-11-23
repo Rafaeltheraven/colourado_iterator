@@ -61,6 +61,28 @@ pub type Hsv = (Hue, Saturation, Value);
 
 impl ColorPalette {
     pub fn new<T: Rng>(palette_type: PaletteType, adjacent_colors: bool, rng: &mut T) -> Self {
+        ColorPalette(HsvPalette::new(
+            palette_type,
+            adjacent_colors,
+            rng
+        ))
+    }
+
+    pub fn get_inner(&self) -> &HsvPalette {
+        &self.0
+    }
+
+    pub fn get_inner_mut(&mut self) -> &mut HsvPalette {
+        &mut self.0
+    }
+
+    pub fn into_inner(self) -> HsvPalette {
+        self.0
+    }
+}
+
+impl HsvPalette {
+    pub fn new<T: Rng>(palette_type: PaletteType, adjacent_colors: bool, rng: &mut T) -> Self {
 
         let hue = rng.gen_range(0.0..360.0);
 
@@ -70,24 +92,15 @@ impl ColorPalette {
             base_divergence = 25.0;
         }
 
-        Self(HsvPalette {
+        Self {
             base_divergence,
             palette_type,
             hue,
             iteration: 0
-        })
+        }
     }
 
-    pub fn get_inner(&self) -> &HsvPalette {
-        &self.0
-    }
 
-    pub fn into_inner(self) -> HsvPalette {
-        self.0
-    }
-}
-
-impl HsvPalette {
     fn palette_dark(&self) -> Hsv {
         let iteration = self.iteration as f32;
         let f = (iteration * 43.0).cos().abs();
